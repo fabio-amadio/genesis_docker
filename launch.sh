@@ -10,6 +10,7 @@ if [ $IsRunning -eq "0" ]; then
         -e NVIDIA_DRIVER_CAPABILITIES=all \
         -e 'QT_X11_NO_MITSHM=1' \
         -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+        -v /usr/share/glvnd/egl_vendor.d/10_nvidia.json:/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
         -v ./examples:/home/examples \
         --ipc host \
         --device /dev/dri \

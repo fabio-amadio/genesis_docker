@@ -1,9 +1,10 @@
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu22.04
+FROM nvidia/opengl:1.1-glvnd-devel-ubuntu22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CUDNN_ARCH="linux-x86_64"
 
 ENV TZ="Europe/Paris"
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Set the default shell to bash instead of sh
 SHELL ["/bin/bash", "-c"]
@@ -11,17 +12,28 @@ SHELL ["/bin/bash", "-c"]
 ENV SHELL=/bin/bash
 ENV TERM=xterm
 
-RUN echo "export PATH=/usr/local/cuda-12.6/bin${PATH:+:${PATH}}" >> ~/.bashrc 
-RUN echo "export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" >> ~/.bashrc 
-
 # install basic dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     software-properties-common \
     git \
+    mesa-utils \
+    mesa-va-drivers \
     python3-pip \
     python-is-python3 \
     && rm -rf /var/lib/apt/lists/*
+
+# install cuda keyring
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+RUN dpkg -i cuda-keyring_1.1-1_all.deb && apt-get update && apt-get -y install cuda-toolkit-12-6
+RUN echo "export PATH=/usr/local/cuda-12.6/bin${PATH:+:${PATH}}" >> ~/.bashrc 
+RUN echo "export LD_LIBRARY_PATH=/usr/local/cuda-12.6/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" >> ~/.bashrc 
+
+# Let's set some environment variables
+ENV CUDA_HOME=/usr/local/cuda-12.1
+ENV PATH=$PATH:/usr/local/cuda-12.1/bin/
+ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6+PTX"
+ENV CUDACXX=/usr/local/cuda-12.1/bin/nvcc 
 
 # install genesis and torch    
 RUN pip install genesis-world torch torchvision torchaudio tensorboard "pybind11[global]"
